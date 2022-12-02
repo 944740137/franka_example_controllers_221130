@@ -17,7 +17,8 @@
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
-namespace {
+namespace 
+{
 template <class T, size_t N>
 std::ostream& operator<<(std::ostream& ostream, const std::array<T, N>& array) {
   ostream << "[";
@@ -28,10 +29,11 @@ std::ostream& operator<<(std::ostream& ostream, const std::array<T, N>& array) {
 }
 }  // anonymous namespace
 
-namespace franka_example_controllers {
+namespace franka_example_controllers 
+{
 
-bool ModelExampleController::init(hardware_interface::RobotHW* robot_hw,
-                                  ros::NodeHandle& node_handle) {
+bool ModelExampleController::init(hardware_interface::RobotHW* robot_hw,ros::NodeHandle& node_handle) 
+{
   franka_state_interface_ = robot_hw->get<franka_hw::FrankaStateInterface>();
   if (franka_state_interface_ == nullptr) {
     ROS_ERROR("ModelExampleController: Could not get Franka state interface from hardware");
@@ -68,7 +70,8 @@ bool ModelExampleController::init(hardware_interface::RobotHW* robot_hw,
   return true;
 }
 
-void ModelExampleController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
+void ModelExampleController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) 
+{
   if (rate_trigger_()) {
     std::array<double, 49> mass = model_handle_->getMass();
     std::array<double, 7> coriolis = model_handle_->getCoriolis();

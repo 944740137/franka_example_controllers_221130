@@ -13,8 +13,8 @@
 
 namespace franka_example_controllers {
 
-bool JointImpedanceExampleController::init(hardware_interface::RobotHW* robot_hw,
-                                           ros::NodeHandle& node_handle) {
+bool JointImpedanceExampleController::init(hardware_interface::RobotHW* robot_hw,ros::NodeHandle& node_handle) 
+{
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR("JointImpedanceExampleController: Could not read parameter arm_id");
@@ -127,12 +127,13 @@ bool JointImpedanceExampleController::init(hardware_interface::RobotHW* robot_hw
   return true;
 }
 
-void JointImpedanceExampleController::starting(const ros::Time& /*time*/) {
+void JointImpedanceExampleController::starting(const ros::Time& /*time*/) 
+{
   initial_pose_ = cartesian_pose_handle_->getRobotState().O_T_EE_d;
 }
 
-void JointImpedanceExampleController::update(const ros::Time& /*time*/,
-                                             const ros::Duration& period) {
+void JointImpedanceExampleController::update(const ros::Time& /*time*/,const ros::Duration& period) 
+{
   if (vel_current_ < vel_max_) {
     vel_current_ += period.toSec() * std::fabs(vel_max_ / acceleration_time_);
   }
@@ -171,7 +172,8 @@ void JointImpedanceExampleController::update(const ros::Time& /*time*/,
   // 1000 * (1 / sampling_time).
   std::array<double, 7> tau_d_saturated = saturateTorqueRate(tau_d_calculated, robot_state.tau_J_d);
 
-  for (size_t i = 0; i < 7; ++i) {
+  for (size_t i = 0; i < 7; ++i) 
+  {
     joint_handles_[i].setCommand(tau_d_saturated[i]);
   }
 
@@ -197,9 +199,8 @@ void JointImpedanceExampleController::update(const ros::Time& /*time*/,
   }
 }
 
-std::array<double, 7> JointImpedanceExampleController::saturateTorqueRate(
-    const std::array<double, 7>& tau_d_calculated,
-    const std::array<double, 7>& tau_J_d) {  // NOLINT (readability-identifier-naming)
+std::array<double, 7> JointImpedanceExampleController::saturateTorqueRate(const std::array<double, 7>& tau_d_calculated,const std::array<double, 7>& tau_J_d) 
+{  // NOLINT (readability-identifier-naming)
   std::array<double, 7> tau_d_saturated{};
   for (size_t i = 0; i < 7; i++) {
     double difference = tau_d_calculated[i] - tau_J_d[i];

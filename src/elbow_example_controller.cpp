@@ -15,8 +15,8 @@
 
 namespace franka_example_controllers {
 
-bool ElbowExampleController::init(hardware_interface::RobotHW* robot_hardware,
-                                  ros::NodeHandle& node_handle) {
+bool ElbowExampleController::init(hardware_interface::RobotHW* robot_hardware,ros::NodeHandle& node_handle) 
+{
   cartesian_pose_interface_ = robot_hardware->get<franka_hw::FrankaPoseCartesianInterface>();
   if (cartesian_pose_interface_ == nullptr) {
     ROS_ERROR("ElbowExampleController: Could not get Cartesian Pose interface from hardware");
@@ -64,13 +64,15 @@ bool ElbowExampleController::init(hardware_interface::RobotHW* robot_hardware,
   return true;
 }
 
-void ElbowExampleController::starting(const ros::Time& /* time */) {
+void ElbowExampleController::starting(const ros::Time& /* time */) 
+{
   initial_pose_ = cartesian_pose_handle_->getRobotState().O_T_EE_d;
   initial_elbow_ = cartesian_pose_handle_->getRobotState().elbow_d;
   elapsed_time_ = ros::Duration(0.0);
 }
 
-void ElbowExampleController::update(const ros::Time& /* time */, const ros::Duration& period) {
+void ElbowExampleController::update(const ros::Time& /* time */, const ros::Duration& period) 
+{
   elapsed_time_ += period;
 
   double angle = M_PI / 10.0 * (1.0 - std::cos(M_PI / 5.0 * elapsed_time_.toSec()));

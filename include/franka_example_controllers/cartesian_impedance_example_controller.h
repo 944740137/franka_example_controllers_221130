@@ -25,7 +25,8 @@ namespace franka_example_controllers {
 class CartesianImpedanceExampleController : public controller_interface::MultiInterfaceController<
                                                 franka_hw::FrankaModelInterface,
                                                 hardware_interface::EffortJointInterface,
-                                                franka_hw::FrankaStateInterface> {
+                                                franka_hw::FrankaStateInterface>
+ {
  public:
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle) override;
   void starting(const ros::Time&) override;
@@ -60,8 +61,7 @@ class CartesianImpedanceExampleController : public controller_interface::MultiIn
   std::unique_ptr<dynamic_reconfigure::Server<franka_example_controllers::compliance_paramConfig>>
       dynamic_server_compliance_param_;
   ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-  void complianceParamCallback(franka_example_controllers::compliance_paramConfig& config,
-                               uint32_t level);
+  void complianceParamCallback(franka_example_controllers::compliance_paramConfig& config,uint32_t level);
 
   // Equilibrium pose subscriber
   ros::Subscriber sub_equilibrium_pose_;

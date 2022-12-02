@@ -15,8 +15,8 @@
 
 namespace franka_example_controllers {
 
-bool CartesianPoseExampleController::init(hardware_interface::RobotHW* robot_hardware,
-                                          ros::NodeHandle& node_handle) {
+bool CartesianPoseExampleController::init(hardware_interface::RobotHW* robot_hardware,ros::NodeHandle& node_handle) 
+{
   cartesian_pose_interface_ = robot_hardware->get<franka_hw::FrankaPoseCartesianInterface>();
   if (cartesian_pose_interface_ == nullptr) {
     ROS_ERROR(
@@ -68,13 +68,14 @@ bool CartesianPoseExampleController::init(hardware_interface::RobotHW* robot_har
   return true;
 }
 
-void CartesianPoseExampleController::starting(const ros::Time& /* time */) {
+void CartesianPoseExampleController::starting(const ros::Time& /* time */) 
+{
   initial_pose_ = cartesian_pose_handle_->getRobotState().O_T_EE_d;
   elapsed_time_ = ros::Duration(0.0);
 }
 
-void CartesianPoseExampleController::update(const ros::Time& /* time */,
-                                            const ros::Duration& period) {
+void CartesianPoseExampleController::update(const ros::Time& /* time */,const ros::Duration& period) 
+{
   elapsed_time_ += period;
 
   double radius = 0.15;

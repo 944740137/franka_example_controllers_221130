@@ -12,8 +12,8 @@
 
 namespace franka_example_controllers {
 
-bool JointVelocityExampleController::init(hardware_interface::RobotHW* robot_hardware,
-                                          ros::NodeHandle& node_handle) {
+bool JointVelocityExampleController::init(hardware_interface::RobotHW* robot_hardware,ros::NodeHandle& node_handle) 
+{
   velocity_joint_interface_ = robot_hardware->get<hardware_interface::VelocityJointInterface>();
   if (velocity_joint_interface_ == nullptr) {
     ROS_ERROR(
@@ -75,12 +75,13 @@ bool JointVelocityExampleController::init(hardware_interface::RobotHW* robot_har
   return true;
 }
 
-void JointVelocityExampleController::starting(const ros::Time& /* time */) {
+void JointVelocityExampleController::starting(const ros::Time& /* time */) 
+{
   elapsed_time_ = ros::Duration(0.0);
 }
 
-void JointVelocityExampleController::update(const ros::Time& /* time */,
-                                            const ros::Duration& period) {
+void JointVelocityExampleController::update(const ros::Time& /* time */,const ros::Duration& period) 
+{
   elapsed_time_ += period;
 
   ros::Duration time_max(8.0);
@@ -96,7 +97,8 @@ void JointVelocityExampleController::update(const ros::Time& /* time */,
   }
 }
 
-void JointVelocityExampleController::stopping(const ros::Time& /*time*/) {
+void JointVelocityExampleController::stopping(const ros::Time& /*time*/) 
+{
   // WARNING: DO NOT SEND ZERO VELOCITIES HERE AS IN CASE OF ABORTING DURING MOTION
   // A JUMP TO ZERO WILL BE COMMANDED PUTTING HIGH LOADS ON THE ROBOT. LET THE DEFAULT
   // BUILT-IN STOPPING BEHAVIOR SLOW DOWN THE ROBOT.

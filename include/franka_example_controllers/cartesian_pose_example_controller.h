@@ -17,8 +17,8 @@
 namespace franka_example_controllers {
 
 class CartesianPoseExampleController
-    : public controller_interface::MultiInterfaceController<franka_hw::FrankaPoseCartesianInterface,
-                                                            franka_hw::FrankaStateInterface> {
+    : public controller_interface::MultiInterfaceController<franka_hw::FrankaPoseCartesianInterface,franka_hw::FrankaStateInterface> 
+{
  public:
   bool init(hardware_interface::RobotHW* robot_hardware, ros::NodeHandle& node_handle) override;
   void starting(const ros::Time&) override;

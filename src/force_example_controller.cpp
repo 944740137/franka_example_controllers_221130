@@ -13,8 +13,8 @@
 
 namespace franka_example_controllers {
 
-bool ForceExampleController::init(hardware_interface::RobotHW* robot_hw,
-                                  ros::NodeHandle& node_handle) {
+bool ForceExampleController::init(hardware_interface::RobotHW* robot_hw,ros::NodeHandle& node_handle) 
+{
   std::vector<std::string> joint_names;
   std::string arm_id;
   ROS_WARN(
@@ -37,8 +37,7 @@ bool ForceExampleController::init(hardware_interface::RobotHW* robot_hw,
     return false;
   }
   try {
-    model_handle_ = std::make_unique<franka_hw::FrankaModelHandle>(
-        model_interface->getHandle(arm_id + "_model"));
+    model_handle_ = std::make_unique<franka_hw::FrankaModelHandle>(model_interface->getHandle(arm_id + "_model"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
         "ForceExampleController: Exception getting model handle from interface: " << ex.what());
@@ -73,19 +72,15 @@ bool ForceExampleController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  dynamic_reconfigure_desired_mass_param_node_ =
-      ros::NodeHandle("dynamic_reconfigure_desired_mass_param_node");
-  dynamic_server_desired_mass_param_ = std::make_unique<
-      dynamic_reconfigure::Server<franka_example_controllers::desired_mass_paramConfig>>(
-
-      dynamic_reconfigure_desired_mass_param_node_);
-  dynamic_server_desired_mass_param_->setCallback(
-      boost::bind(&ForceExampleController::desiredMassParamCallback, this, _1, _2));
+  dynamic_reconfigure_desired_mass_param_node_ = ros::NodeHandle("dynamic_reconfigure_desired_mass_param_node");
+  dynamic_server_desired_mass_param_ = std::make_unique<dynamic_reconfigure::Server<franka_example_controllers::desired_mass_paramConfig>>(dynamic_reconfigure_desired_mass_param_node_);
+  dynamic_server_desired_mass_param_->setCallback(boost::bind(&ForceExampleController::desiredMassParamCallback, this, _1, _2));
 
   return true;
 }
 
-void ForceExampleController::starting(const ros::Time& /*time*/) {
+void ForceExampleController::starting(const ros::Time& /*time*/) 
+{
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> gravity_array = model_handle_->getGravity();
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());
@@ -95,7 +90,8 @@ void ForceExampleController::starting(const ros::Time& /*time*/) {
   tau_error_.setZero();
 }
 
-void ForceExampleController::update(const ros::Time& /*time*/, const ros::Duration& period) {
+void ForceExampleController::update(const ros::Time& /*time*/, const ros::Duration& period) 
+{
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
@@ -127,9 +123,8 @@ void ForceExampleController::update(const ros::Time& /*time*/, const ros::Durati
   k_i_ = filter_gain_ * target_k_i_ + (1 - filter_gain_) * k_i_;
 }
 
-void ForceExampleController::desiredMassParamCallback(
-    franka_example_controllers::desired_mass_paramConfig& config,
-    uint32_t /*level*/) {
+void ForceExampleController::desiredMassParamCallback(franka_example_controllers::desired_mass_paramConfig& config,uint32_t /*level*/) 
+{
   target_mass_ = config.desired_mass;
   target_k_p_ = config.k_p;
   target_k_i_ = config.k_i;

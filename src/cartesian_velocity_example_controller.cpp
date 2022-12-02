@@ -15,8 +15,8 @@
 
 namespace franka_example_controllers {
 
-bool CartesianVelocityExampleController::init(hardware_interface::RobotHW* robot_hardware,
-                                              ros::NodeHandle& node_handle) {
+bool CartesianVelocityExampleController::init(hardware_interface::RobotHW* robot_hardware,ros::NodeHandle& node_handle) 
+{
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR("CartesianVelocityExampleController: Could not get parameter arm_id");
@@ -69,19 +69,19 @@ bool CartesianVelocityExampleController::init(hardware_interface::RobotHW* robot
   return true;
 }
 
-void CartesianVelocityExampleController::starting(const ros::Time& /* time */) {
+void CartesianVelocityExampleController::starting(const ros::Time& /* time */) 
+{
   elapsed_time_ = ros::Duration(0.0);
 }
 
-void CartesianVelocityExampleController::update(const ros::Time& /* time */,
-                                                const ros::Duration& period) {
+void CartesianVelocityExampleController::update(const ros::Time& /* time */,const ros::Duration& period) 
+{
   elapsed_time_ += period;
 
   double time_max = 4.0;
   double v_max = 0.05;
   double angle = M_PI / 4.0;
-  double cycle = std::floor(
-      pow(-1.0, (elapsed_time_.toSec() - std::fmod(elapsed_time_.toSec(), time_max)) / time_max));
+  double cycle = std::floor(pow(-1.0, (elapsed_time_.toSec() - std::fmod(elapsed_time_.toSec(), time_max)) / time_max));
   double v = cycle * v_max / 2.0 * (1.0 - std::cos(2.0 * M_PI / time_max * elapsed_time_.toSec()));
   double v_x = std::cos(angle) * v;
   double v_z = -std::sin(angle) * v;
@@ -89,7 +89,8 @@ void CartesianVelocityExampleController::update(const ros::Time& /* time */,
   velocity_cartesian_handle_->setCommand(command);
 }
 
-void CartesianVelocityExampleController::stopping(const ros::Time& /*time*/) {
+void CartesianVelocityExampleController::stopping(const ros::Time& /*time*/) 
+{
   // WARNING: DO NOT SEND ZERO VELOCITIES HERE AS IN CASE OF ABORTING DURING MOTION
   // A JUMP TO ZERO WILL BE COMMANDED PUTTING HIGH LOADS ON THE ROBOT. LET THE DEFAULT
   // BUILT-IN STOPPING BEHAVIOR SLOW DOWN THE ROBOT.
