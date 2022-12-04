@@ -19,10 +19,12 @@ bool CartesianImpedanceExampleController::init(hardware_interface::RobotHW* robo
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
+  //服务器
   sub_equilibrium_pose_ = node_handle.subscribe(
       "equilibrium_pose", 20, &CartesianImpedanceExampleController::equilibriumPoseCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
+  //参数服务器
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedanceExampleController: Could not read parameter arm_id");
@@ -36,50 +38,44 @@ bool CartesianImpedanceExampleController::init(hardware_interface::RobotHW* robo
     return false;
   }
 
+  //运动学/动力学模型类：实例化
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
-    ROS_ERROR_STREAM(
-        "CartesianImpedanceExampleController: Error getting model interface from hardware");
+    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Error getting model interface from hardware");
     return false;
   }
   try {
-    model_handle_ = std::make_unique<franka_hw::FrankaModelHandle>(
-        model_interface->getHandle(arm_id + "_model"));
+    model_handle_ = std::make_unique<franka_hw::FrankaModelHandle>(model_interface->getHandle(arm_id + "_model"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "CartesianImpedanceExampleController: Exception getting model handle from interface: "
-        << ex.what());
+        "CartesianImpedanceExampleController: Exception getting model handle from interface: "<< ex.what());
     return false;
   }
 
+  //机器人完整状态类：实例化
   auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
   if (state_interface == nullptr) {
-    ROS_ERROR_STREAM(
-        "CartesianImpedanceExampleController: Error getting state interface from hardware");
+    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Error getting state interface from hardware");
     return false;
   }
   try {
-    state_handle_ = std::make_unique<franka_hw::FrankaStateHandle>(
-        state_interface->getHandle(arm_id + "_robot"));
+    state_handle_ = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(arm_id + "_robot"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
-    ROS_ERROR_STREAM(
-        "CartesianImpedanceExampleController: Exception getting state handle from interface: "
-        << ex.what());
+    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Exception getting state handle from interface: "<< ex.what());
     return false;
   }
-
+  
+  //关节控制类（ROS自带）：实例化
   auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
   if (effort_joint_interface == nullptr) {
-    ROS_ERROR_STREAM(
-        "CartesianImpedanceExampleController: Error getting effort joint interface from hardware");
+    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Error getting effort joint interface from hardware");
     return false;
   }
   for (size_t i = 0; i < 7; ++i) {
     try {
       joint_handles_.push_back(effort_joint_interface->getHandle(joint_names[i]));
     } catch (const hardware_interface::HardwareInterfaceException& ex) {
-      ROS_ERROR_STREAM(
-          "CartesianImpedanceExampleController: Exception getting joint handles: " << ex.what());
+      ROS_ERROR_STREAM("CartesianImpedanceExampleController: Exception getting joint handles: " << ex.what());
       return false;
     }
   }
@@ -88,11 +84,13 @@ bool CartesianImpedanceExampleController::init(hardware_interface::RobotHW* robo
   dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<franka_example_controllers::compliance_paramConfig>>(dynamic_reconfigure_compliance_param_node_);
   dynamic_server_compliance_param_->setCallback(boost::bind(&CartesianImpedanceExampleController::complianceParamCallback, this, _1, _2));
 
+  //初始位置姿态赋初值
   position_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
 
+  //阻抗参数赋初值
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
 
@@ -101,16 +99,18 @@ bool CartesianImpedanceExampleController::init(hardware_interface::RobotHW* robo
 
 void CartesianImpedanceExampleController::starting(const ros::Time& /*time*/) 
 {
+  std::cout << "--------------start:CartesianImpedanceExampleController.12.4-16.22--------------"<< std::endl;
   // compute initial velocity with jacobian and set x_attractor and q_d_nullspace
-  // to initial configuration
+  // to initial configuration 机器人初始状态类
   franka::RobotState initial_state = state_handle_->getRobotState();
-  // get jacobian
+  // get jacobian 基坐标系下的雅可比
   std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
-  // convert to eigen
+  // convert to eigen 提取初始状态类中的位置
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q_initial(initial_state.q.data());
+  //齐次变换矩阵
   Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
 
-  // set equilibrium point to current state
+  // set equilibrium point to current state  将当前状态设置为平衡点
   position_d_ = initial_transform.translation();
   orientation_d_ = Eigen::Quaterniond(initial_transform.rotation());
   position_d_target_ = initial_transform.translation();
@@ -122,12 +122,12 @@ void CartesianImpedanceExampleController::starting(const ros::Time& /*time*/)
 
 void CartesianImpedanceExampleController::update(const ros::Time& /*time*/,const ros::Duration& /*period*/) 
 {
-  // get state variables
+  // get state variables 获取状态
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
   std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
 
-  // convert to Eigen
+  // convert to Eigen  将array类转成矩阵
   Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
@@ -142,7 +142,7 @@ void CartesianImpedanceExampleController::update(const ros::Time& /*time*/,const
   Eigen::Matrix<double, 6, 1> error;
   error.head(3) << position - position_d_;//提取前三个元素
 
-  // orientation error
+  // orientation error 四元数内积？
   if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) 
   {
     orientation.coeffs() << -orientation.coeffs();
@@ -173,10 +173,10 @@ void CartesianImpedanceExampleController::update(const ros::Time& /*time*/,const
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis;
 
-  // Saturate torque rate to avoid discontinuities
+  // Saturate torque rate to avoid discontinuities 平滑
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
   for (size_t i = 0; i < 7; ++i) {
-    joint_handles_[i].setCommand(tau_d(i));
+    joint_handles_[i].setCommand(tau_d(i));//关节句柄设置力矩命令
   }
 
   // update parameters changed online either through dynamic reconfigure or through the interactive
@@ -184,6 +184,7 @@ void CartesianImpedanceExampleController::update(const ros::Time& /*time*/,const
   cartesian_stiffness_ = filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
   cartesian_damping_ = filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
   nullspace_stiffness_ = filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+
   std::lock_guard<std::mutex> position_d_target_mutex_lock(position_and_orientation_d_target_mutex_);
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
@@ -194,7 +195,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceExampleController::saturateTorqueR
   Eigen::Matrix<double, 7, 1> tau_d_saturated{};
   for (size_t i = 0; i < 7; i++) {
     double difference = tau_d_calculated[i] - tau_J_d[i];
-    tau_d_saturated[i] = tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+    tau_d_saturated[i] = tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), - delta_tau_max_);//6
   }
   return tau_d_saturated;
 }
